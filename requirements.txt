@@ -1,0 +1,4 @@
+ts3
+ts3query
+pygame-ce
+PyQt5
