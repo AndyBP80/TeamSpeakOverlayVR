@@ -1,4 +1,5 @@
 ts3
 ts3query
 pygame-ce
+psutil
 PyQt6

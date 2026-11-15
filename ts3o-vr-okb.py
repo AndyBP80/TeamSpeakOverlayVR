@@ -11,14 +11,20 @@
 
 import argparse
 import copy
+import ctypes
 import json
 import os
-import subprocess
 import sys
+
+import psutil
+
+if sys.platform == "win32":
+    myappid = "ts3o.vr.okb.1"  # Можете использовать любой уникальный идентификатор
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 import ts3.query
 from PyQt6.QtCore import QRect, Qt, QTimer
-from PyQt6.QtGui import QBrush, QColor, QFont, QFontMetrics, QPainter, QPen
+from PyQt6.QtGui import QBrush, QColor, QFont, QFontMetrics, QIcon, QPainter, QPen
 from PyQt6.QtWidgets import QApplication, QMainWindow
 
 
@@ -102,7 +108,7 @@ def ensure_default_config(path: str) -> None:
     with open(path, "w", encoding="utf-8") as f:
         f.write(json.dumps(DEFAULT_CONFIG, indent=2, ensure_ascii=False))
         f.write("\n")
-    print(f"Файл настроек не найден - создан с дефолтными значениями: {path}")
+    # print(f"Файл настроек не найден - создан с дефолтными значениями: {path}")
 
 
 def load_config(path: str) -> dict:
@@ -269,7 +275,7 @@ class DrawingWindow(QMainWindow):
             self.ts3conn = conn
             self.error_message = ""
         except Exception as e:  # noqa: BLE001
-            print(f"Не удалось подключиться: {e}")
+            # print(f"Не удалось подключиться: {e}")
             self.error_message = "Failed to connect"
 
     def update_data(self):
@@ -307,7 +313,7 @@ class DrawingWindow(QMainWindow):
             # Соединение разорвано (например, при смене сервера) - не завершаем приложение,
             # сбрасываем соединение, чтобы таймер переподключения восстановил его,
             # и выводим красное сообщение об ошибке в окно
-            print(f"Ошибка при обновлении данных: {e}")
+            # print(f"Ошибка при обновлении данных: {e}")
             self.listnick.clear()
             self.listflag.clear()
             self.listmuted.clear()
@@ -317,24 +323,19 @@ class DrawingWindow(QMainWindow):
 
 
 def is_ts3client_running(process_name: str) -> bool:
-    """Проверяет, запущен ли процесс с указанным именем (через tasklist)."""
-    try:
-        # Используем tasklist для проверки процесса
-        result = subprocess.run(
-            ["tasklist", "/FI", f"IMAGENAME eq {process_name}", "/FO", "CSV", "/NH"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        return process_name.lower() in result.stdout.lower()
-    except subprocess.CalledProcessError:
-        return False
+    """Проверяет, запущен ли процесс с указанным именем (через psutil)."""
+    wanted = process_name.lower()
+    for proc in psutil.process_iter(["name"]):
+        name = proc.info.get("name")
+        if name and name.lower() == wanted:
+            return True
+    return False
 
 
 def check_and_exit_if_no_ts3client(process_name: str):
     """Проверяет наличие процесса и завершает приложение, если его нет."""
     if not is_ts3client_running(process_name):
-        print(f"Процесс {process_name} не найден. Завершение приложения.")
+        # print(f"Процесс {process_name} не найден. Завершение приложения.")
         os._exit(0)
 
 
@@ -358,10 +359,11 @@ def main():
     try:
         config = Config(load_config(config_path))
     except ConfigError as exc:
-        print(f"Ошибка настроек: {exc}")
+        # print(f"Ошибка настроек: {exc}")
         sys.exit(1)
 
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "ts3o-vr.ico")))
     window = DrawingWindow(config)
     window.show()
 

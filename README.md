@@ -24,7 +24,7 @@
   после отпускания — базовые настройки из конфига.
 
 Скрипт подключается к query-серверу TeamSpeak, отрисовывает полупрозрачное
-окно и работает, пока запущен клиент TeamSpeak (проверяется через `tasklist`).
+окно и работает, пока запущен клиент TeamSpeak (проверяется через `psutil`).
 
 ## Установка
 
@@ -131,21 +131,28 @@ uv run ts3o-vr-okb.py C:\ts3o\ts3o-vr-okb.json
 
 ## Сборка в exe (Nuitka)
 
-Скрипт использует только Qt и stdlib, поэтому собирается в standalone
-одной командой:
+Для сборки нужен C-компилятор (MSVC Build Tools или MinGW64/LLVM). Озаботьтесь заранее.
+Установка MSVC Build Tools:
+
+```bat
+winget install Microsoft.VisualStudio.BuildTools --force --override "--wait --quiet --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.VC.Llvm.Clang --add Microsoft.VisualStudio.ComponentGroup.ClangCL --add Microsoft.VisualStudio.Component.Windows11SDK.26100"
+```
+После завершения установки необходимо перезапустить терминал для подтягивания переменных окружения.
+
+Сборка исполняемого файла и необходимых библиотек:
 
 ```bat
 uv pip install nuitka
-.venv\Scripts\python.exe -m nuitka ts3o-vr-okb.py --standalone --onefile --pyqt6=module --enable-plugin=nogui --module-name=ts3o_vr_okb --output-filename=ts3o-vr-okb.exe --remove-output
+uv pip install zstandard
+.venv\Scripts\python.exe -m nuitka ts3o-vr-okb.py --standalone --enable-plugin=pyqt6 --windows-console-mode=disable --windows-icon-from-ico=ts3o-vr.ico --include-data-file=ts3o-vr.ico=ts3o-vr.ico --output-filename=ts3o-vr-okb.exe --remove-output
 ```
-
-Для сборки нужен C-компилятор (MSVC Build Tools или MinGW64/LLVM).
 
 Джойстик-вариант собирается так же (использует pygame-ce):
 
 ```bat
 uv pip install nuitka
-.venv\Scripts\python.exe -m nuitka ts3o-vr-joystick-okb.py --standalone --onefile --pyqt6=module --enable-plugin=nogui --module-name=ts3o_vr_joystick_okb --output-filename=ts3o-vr-joystick-okb.exe --remove-output
+uv pip install zstandard
+.venv\Scripts\python.exe -m nuitka ts3o-vr-joystick-okb.py --standalone --enable-plugin=pyqt6 --windows-console-mode=disable --windows-icon-from-ico=ts3o-vr.ico --include-data-file=ts3o-vr.ico=ts3o-vr.ico --output-filename=ts3o-vr-joystick-okb --remove-output
 ```
 
 Итоговый `ts3o-vr-okb.exe` запускается так же, как скрипт:

@@ -8,7 +8,7 @@
 Настройки (имя отслеживаемого процесса, API-ключ, отображение, цвета,
 размер текста и окна, джойстик и кнопка) задаются в файле JSON. Путь к
 файлу передаётся через командную строку; по умолчанию используется
-ts3o-vr-joystick-okb.json, расположенный рядом с исполняемым файлом (или
+ts3o-vr-okb.json, расположенный рядом с исполняемым файлом (или
 со скриптом при запуске из исходников).
 
 При старте скрипт печатает список найденных джойстиков - точное имя
@@ -19,14 +19,20 @@ ts3o-vr-joystick-okb.json, расположенный рядом с исполн
 
 import argparse
 import copy
+import ctypes
 import json
 import os
-import subprocess
 import sys
+
+import psutil
+
+if sys.platform == "win32":
+    myappid = "ts3o.vr.okb.2"  # Можете использовать любой уникальный идентификатор
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 import ts3.query
 from PyQt6.QtCore import QRect, Qt, QTimer
-from PyQt6.QtGui import QBrush, QColor, QFont, QFontMetrics, QPainter, QPen
+from PyQt6.QtGui import QBrush, QColor, QFont, QFontMetrics, QIcon, QPainter, QPen
 from PyQt6.QtWidgets import QApplication, QMainWindow
 
 try:
@@ -409,20 +415,13 @@ class DrawingWindow(QMainWindow):
 
 
 def is_ts3client_running(process_name: str) -> bool:
-    """Проверяет, запущен ли процесс с указанным именем (через tasklist)."""
-    try:
-        # Используем tasklist для проверки процесса
-        result = subprocess.run(
-            ["tasklist", "/FI", f"IMAGENAME eq {process_name}", "/FO", "CSV", "/NH"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        # Если процесс не найден, tasklist выводит строку "No tasks are running..."
-        # (локализованную), поэтому проверяем именно наличие имени образа в выводе
-        return process_name.lower() in result.stdout.lower()
-    except subprocess.CalledProcessError:
-        return False
+    """Проверяет, запущен ли процесс с указанным именем (через psutil)."""
+    wanted = process_name.lower()
+    for proc in psutil.process_iter(["name"]):
+        name = proc.info.get("name")
+        if name and name.lower() == wanted:
+            return True
+    return False
 
 
 def check_and_exit_if_no_ts3client(process_name: str):
@@ -460,8 +459,9 @@ def main():
     joy = JoystickController(config.joy_name, config.joy_button)
 
     app = QApplication(sys.argv)
-    window = DrawingWindow(config, joy)  # Create an instance of the DrawingWindow class
-    window.show()  # Display the window
+    app.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "ts3o-vr.ico")))
+    window = DrawingWindow(config, joy)
+    window.show()
 
     # Первая попытка подключения к Teamspeak (при неудаче в окне
     # будет красное сообщение об ошибке)
@@ -479,7 +479,7 @@ def main():
     reconnect_timer.timeout.connect(lambda: window.reconnect())
     reconnect_timer.start(3000)  # Пробовать каждые 3 секунды
 
-    sys.exit(app.exec())  # Start the application event loop and exit when it's finished
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
