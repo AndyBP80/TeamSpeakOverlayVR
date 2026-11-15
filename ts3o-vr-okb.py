@@ -275,7 +275,7 @@ class DrawingWindow(QMainWindow):
             self.ts3conn = conn
             self.error_message = ""
         except Exception as e:  # noqa: BLE001
-            # print(f"Не удалось подключиться: {e}")
+            print(f"Не удалось подключиться: {e}")
             self.error_message = "Failed to connect"
 
     def update_data(self):
@@ -313,7 +313,7 @@ class DrawingWindow(QMainWindow):
             # Соединение разорвано (например, при смене сервера) - не завершаем приложение,
             # сбрасываем соединение, чтобы таймер переподключения восстановил его,
             # и выводим красное сообщение об ошибке в окно
-            # print(f"Ошибка при обновлении данных: {e}")
+            print(f"Ошибка при обновлении данных: {e}")
             self.listnick.clear()
             self.listflag.clear()
             self.listmuted.clear()
@@ -359,7 +359,7 @@ def main():
     try:
         config = Config(load_config(config_path))
     except ConfigError as exc:
-        # print(f"Ошибка настроек: {exc}")
+        print(f"Ошибка настроек: {exc}")
         sys.exit(1)
 
     app = QApplication(sys.argv)
