@@ -197,7 +197,6 @@ class DrawingWindow(QMainWindow):
         self.setWindowTitle("TS data")
         self.setGeometry(0, 0, config.width, config.height)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        #        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
 
         self.painter = QPainter()
@@ -249,13 +248,12 @@ class DrawingWindow(QMainWindow):
                             i = i + 1
                             pos_y = (self.config.font_size + 8) * (i + 1)
                             self.painter.drawText(0, pos_y, ni)
-            except IndexError as e:
-                print(f"An IndexError occurred: {e}")
-                # Handle the error appropriately, e.g., by logging it or notifying the user
+            except Exception as e:  # noqa: BLE001
+                print(f"Ошибка при отрисовке: {e}")
 
         self.painter.end()
         self.update_data()
-        QTimer.singleShot(10, self.update)  # Schedule a repaint after 0.01 second
+        QTimer.singleShot(10, self.update)
 
     def reconnect(self):
         """Пытается (пере)установить соединение с query-сервером Teamspeak.
@@ -302,9 +300,9 @@ class DrawingWindow(QMainWindow):
                         self.listnick.append(nick)
                         self.listflag.append(flag)
                         self.listmuted.append(muted)
-
-                except IndexError:
+                except Exception:  # noqa: BLE001
                     break
+
         except Exception as e:  # noqa: BLE001
             # Соединение разорвано (например, при смене сервера) - не завершаем приложение,
             # сбрасываем соединение, чтобы таймер переподключения восстановил его,
@@ -328,8 +326,6 @@ def is_ts3client_running(process_name: str) -> bool:
             text=True,
             check=True,
         )
-        # Если процесс не найден, tasklist выводит строку "No tasks are running..."
-        # (локализованную), поэтому проверяем именно наличие имени образа в выводе
         return process_name.lower() in result.stdout.lower()
     except subprocess.CalledProcessError:
         return False
@@ -366,11 +362,11 @@ def main():
         sys.exit(1)
 
     app = QApplication(sys.argv)
-    window = DrawingWindow(config)  # Create an instance of the DrawingWindow class
-    window.show()  # Display the window
+    window = DrawingWindow(config)
+    window.show()
 
     # Первая попытка подключения к Teamspeak (при неудаче в окне
-    # будет красное сообщение "Failed to connect <адрес сервера>")
+    # будет красное сообщение "Failed to connect")
     window.reconnect()
 
     # Добавляем таймер для проверки запущенного процесса:
@@ -385,7 +381,7 @@ def main():
     reconnect_timer.timeout.connect(lambda: window.reconnect())
     reconnect_timer.start(3000)  # Пробовать каждые 3 секунды
 
-    sys.exit(app.exec())  # Start the application event loop and exit when it's finished
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
