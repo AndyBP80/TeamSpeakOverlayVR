@@ -2,6 +2,6 @@
 cd /d "%~dp0"
 
 ::рабочий
-uv run TSO_for_OpenKneeboard.py
+uv run ts3o-vr-okb.py %*
 
 ::pause
