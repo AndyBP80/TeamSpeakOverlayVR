@@ -9,3 +9,5 @@ wheels/
 # Virtual environments
 .venv
 uv.lock
+ts3o-vr-joystick-okb.json
+ts3o-vr-okb.json
