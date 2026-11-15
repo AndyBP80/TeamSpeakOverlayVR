@@ -42,7 +42,7 @@ def _app_dir() -> str:
     return os.path.dirname(os.path.abspath(__file__))
 
 
-DEFAULT_CONFIG_FILENAME = "ts3o-vr-joystick-okb.json"
+DEFAULT_CONFIG_FILENAME = "ts3o-vr-okb.json"
 APIKEY_PLACEHOLDER = "insert your ts3 api key"
 
 DEFAULT_CONFIG: dict = {
