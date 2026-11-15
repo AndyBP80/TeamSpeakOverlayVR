@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """TeamSpeak 3 overlay: показывает название текущего канала и клиентов канала.
 
 Настройки (имя отслеживаемого процесса, API-ключ, отображение, цвета,
@@ -31,9 +30,7 @@ def _app_dir() -> str:
 
 
 DEFAULT_CONFIG_FILENAME = "ts3o-vr-okb.json"
-APIKEY_PLACEHOLDER = "inset your ts3 api key"
-
-HOST = "localhost"  # адрес (имя) query-сервера Teamspeak — в конфиг не выносится
+APIKEY_PLACEHOLDER = "insert your ts3 api key"
 
 DEFAULT_CONFIG: dict = {
     "process_name": "ts3client_win64.exe",  # имя отслеживаемого процесса
@@ -129,8 +126,6 @@ def load_config(path: str) -> dict:
 class Config:
     """Типизированный доступ к настройкам из JSON-файла."""
 
-    HOST = HOST  # адрес query-сервера задаётся в коде, а не в конфиге
-
     def __init__(self, data: dict):
         self._d = data
 
@@ -145,10 +140,6 @@ class Config:
     @property
     def apikey(self) -> str:
         return self._d["apikey"]
-
-    @property
-    def host(self) -> str:
-        return self.HOST
 
     @property
     def show_channel(self) -> bool:
@@ -210,7 +201,6 @@ class DrawingWindow(QMainWindow):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
 
         self.painter = QPainter()
-        self.painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         self.text_font = QFont(config.font_family, config.font_size)
         self.channelname = ""
         self.listnick: list[str] = []
@@ -224,11 +214,10 @@ class DrawingWindow(QMainWindow):
 
     def paintEvent(self, event):
         self.painter.begin(self)
+        self.painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         self.painter.setPen(Qt.PenStyle.NoPen)
         self.painter.setBrush(QBrush(Qt.GlobalColor.transparent))
-        self.painter.drawRect(
-            QRect(0, 0, self.config.width, self.config.height)
-        )  # Draw a transparent background
+        self.painter.drawRect(QRect(0, 0, self.config.width, self.config.height))  # Draw a transparent background
         self.painter.setFont(self.text_font)
 
         if self.error_message:
@@ -277,19 +266,18 @@ class DrawingWindow(QMainWindow):
         if self.ts3conn is not None:
             return  # соединение уже есть
         try:
-            conn = ts3.query.TS3ClientConnection(self.config.host)
+            conn = ts3.query.TS3ClientConnection("localhost")
             conn.auth(apikey=self.config.apikey)
             self.ts3conn = conn
             self.error_message = ""
-            print(f"Подключено к {self.config.host}")
         except Exception as e:  # noqa: BLE001
-            print(f"Не удалось подключиться к {self.config.host}: {e}")
-            self.error_message = f"Failed to connect {self.config.host}"
+            print(f"Не удалось подключиться: {e}")
+            self.error_message = "Failed to connect"
 
     def update_data(self):
         if self.ts3conn is None:
             # нет соединения - показываем сообщение об ошибке, окно не закрывается
-            self.error_message = f"Failed to connect {self.config.host}"
+            self.error_message = "Failed to connect"
             return
         try:
             mi = self.ts3conn.whoami()
@@ -327,7 +315,7 @@ class DrawingWindow(QMainWindow):
             self.listmuted.clear()
             self.channelname = ""
             self.ts3conn = None
-            self.error_message = f"Failed to connect {self.config.host}"
+            self.error_message = "Failed to connect"
 
 
 def is_ts3client_running(process_name: str) -> bool:
@@ -351,8 +339,6 @@ def check_and_exit_if_no_ts3client(process_name: str):
     """Проверяет наличие процесса и завершает приложение, если его нет."""
     if not is_ts3client_running(process_name):
         print(f"Процесс {process_name} не найден. Завершение приложения.")
-        # sys.exit() внутри слота Qt перехватывается диспетчером событий и
-        # приложение продолжает работать - используем безусловное завершение
         os._exit(0)
 
 
@@ -365,10 +351,7 @@ def parse_args(argv):
         nargs="?",
         default=None,
         metavar="PATH",
-        help=(
-            "путь к файлу настроек JSON (абсолютный или относительный); "
-            f"по умолчанию: {DEFAULT_CONFIG_FILENAME} рядом с исполняемым файлом"
-        ),
+        help=(f"путь к файлу настроек JSON (абсолютный или относительный); по умолчанию: {DEFAULT_CONFIG_FILENAME} рядом с исполняемым файлом"),
     )
     return parser.parse_args(argv)
 
