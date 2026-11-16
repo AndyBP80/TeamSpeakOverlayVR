@@ -24,12 +24,11 @@ import json
 import os
 import sys
 
-import psutil
-
 if sys.platform == "win32":
     myappid = "ts3o.vr.okb.2"  # Можете использовать любой уникальный идентификатор
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
+import psutil
 import ts3.query
 from PyQt6.QtCore import QRect, Qt, QTimer
 from PyQt6.QtGui import QBrush, QColor, QFont, QFontMetrics, QIcon, QPainter, QPen
@@ -279,6 +278,7 @@ class DrawingWindow(QMainWindow):
         self.setGeometry(0, 0, config.width, config.height)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+        self.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "ts3o-vr.ico")))
 
         self.painter = QPainter()
         self.text_font = QFont(config.font_family, config.font_size)
